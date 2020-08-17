@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest.permission;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
@@ -13,13 +15,16 @@ import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.ParcelUuid;
 import android.util.Log;
+import android.util.SparseArray;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -50,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
 
         bleCheck(bluetoothAdapter);
-
     }
 
     private void busListInit() {
@@ -88,11 +92,24 @@ public class MainActivity extends AppCompatActivity {
                 ScanRecord scanRecord = result.getScanRecord();
                 if( scanRecord.getDeviceName() != null ){
                     Log.d("BLEDebug" , "-------------ScanRecordData------------------");
-                    Log.d("BLEDebug" , "getDevice:" + scanRecord.getDeviceName());
-                    Log.d("BLEDebug" , "getAdvertiseFlags:"+ scanRecord.getAdvertiseFlags());
-                    Log.d("BLEDebug" , "getTxPowerLevel:"+ scanRecord.getTxPowerLevel());
-                    Log.d("BLEDebug" , "getServiceUuids:"+ scanRecord.getServiceUuids());
+                    Log.d("BLEDebug" , "Device name:" + result.getDevice().getName());
+                    Log.d("BLEDebug" , "device mac Address:"+ result.getDevice());
+                    StringBuilder sb = new StringBuilder();
+
+                    for(int i = 0 ; i < 16 ; i++){
+                        sb.append( String.format("%02X", scanRecord.getBytes()[9+i]) );
+                        sb.append("-");
+                    }
+                    Log.d("BLEDebug" , "data to String:" + sb.toString());
                 }
+
+
+                device.connectGatt(getApplicationContext(), false, new BluetoothGattCallback() {
+                    @Override
+                    public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                        super.onServicesDiscovered(gatt, status);
+                    }
+                });
 
             }
 
@@ -108,5 +125,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
 }
