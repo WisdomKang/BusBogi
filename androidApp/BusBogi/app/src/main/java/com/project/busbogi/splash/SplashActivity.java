@@ -1,4 +1,4 @@
-package com.project.busbogi;
+package com.project.busbogi.splash;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -15,7 +15,9 @@ import android.os.Handler;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
-import android.widget.Toast;
+
+import com.project.busbogi.R;
+import com.project.busbogi.main.MainActivity;
 
 public class SplashActivity extends AppCompatActivity {
     //필요권한들
@@ -45,13 +47,12 @@ public class SplashActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if( hasPermissions( getApplicationContext(), PERMISSIONS) ){
-                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                    startActivity(intent);
-                    finish();
-                }else{
+                if( !hasPermissions( getApplicationContext(), PERMISSIONS) ){
                     getPermission();
                 }
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                finish();
             }
         }, 5000);
 

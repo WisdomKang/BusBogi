@@ -1,4 +1,4 @@
-package com.project.busbogi;
+package com.project.busbogi.main;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -21,11 +21,14 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.project.busbogi.R;
 import com.project.busbogi.ble.service.BeaconScanService;
 
 import java.util.ArrayList;
@@ -42,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ListView busListView;
     private TextView statusText;
-    private ArrayAdapter<String> arrayAdapter;
+    private BusListAdapter adapter;
     private ArrayList<String> busList;
 
     private BluetoothManager bluetoothManager;
@@ -56,10 +59,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         uiInit();
 
-        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();
-        bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
-        bleCheck(bluetoothAdapter);
+//        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+//        bluetoothAdapter = bluetoothManager.getAdapter();
+//        bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
+//        bleCheck(bluetoothAdapter);
 
     }
 
@@ -67,10 +70,23 @@ public class MainActivity extends AppCompatActivity {
         busListView = findViewById(R.id.busList);
         statusText = findViewById(R.id.statusText);
         statusText.setText("정류장 스캔중...");
+        statusText.setVisibility(View.INVISIBLE);
         busList = new ArrayList<>();
-        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, busList);
-        busListView.setAdapter(arrayAdapter);
-        arrayAdapter.notifyDataSetChanged();
+        busList.add("7707");
+        busList.add("103");
+        busList.add("42");
+        busList.add("109");
+        adapter = new BusListAdapter();
+        for(int i = 0 ; i < 20 ; i++) adapter.addNumber("bus"+i);
+        busListView.setAdapter(adapter);
+        busListView.setVisibility(View.VISIBLE);
+        busListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                CheckableLinearLayout linearLayout = (CheckableLinearLayout) view;
+                linearLayout.toggle();
+            }
+        });
     }
 
     private void bleCheck(BluetoothAdapter bluetoothAdapter) {
