@@ -1,6 +1,9 @@
 package com.project.busbogi.main;
 
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.widget.CheckBox;
 import android.widget.Checkable;
@@ -23,6 +26,17 @@ public class CheckableLinearLayout extends LinearLayout implements Checkable {
     public boolean isChecked() {
         CheckBox checkBox = findViewById(R.id.checkBox);
         return checkBox.isChecked();
+    }
+
+    private Path path;
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        if (path == null) {
+            path = new Path();
+            path.addRoundRect(new RectF(0, 0, canvas.getWidth(), canvas.getHeight()), 10, 10, Path.Direction.CW);
+        }
+        canvas.clipPath(path);
+        super.dispatchDraw(canvas);
     }
 
     @Override

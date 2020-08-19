@@ -4,143 +4,101 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest.permission;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanRecord;
-import android.bluetooth.le.ScanResult;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.project.busbogi.R;
 import com.project.busbogi.ble.service.BeaconScanService;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    //필요권한들
-    private String[] PERMISSIONS = {
-            permission.BLUETOOTH,
-            permission.BLUETOOTH_ADMIN,
-            permission.ACCESS_COARSE_LOCATION,
-            permission.ACCESS_FINE_LOCATION
-    };
 
+    //UI관련 View Widget
     private ListView busListView;
     private TextView statusText;
     private BusListAdapter adapter;
     private ArrayList<String> busList;
 
-    private BluetoothManager bluetoothManager;
-    private BluetoothAdapter bluetoothAdapter;
-    private BluetoothLeScanner bluetoothLeScanner;
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        uiInit();
-
-//        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-//        bluetoothAdapter = bluetoothManager.getAdapter();
-//        bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
-//        bleCheck(bluetoothAdapter);
-
+        initUi();
+        beaconScanServiceStart();
     }
 
-    private void uiInit() {
+    //UI 초기화 메서드
+    private void initUi() {
         busListView = findViewById(R.id.busList);
         statusText = findViewById(R.id.statusText);
-        statusText.setText("정류장 스캔중...");
-        statusText.setVisibility(View.INVISIBLE);
         busList = new ArrayList<>();
-        busList.add("7707");
-        busList.add("103");
-        busList.add("42");
-        busList.add("109");
+
         adapter = new BusListAdapter();
-        for(int i = 0 ; i < 20 ; i++) adapter.addNumber("bus"+i);
+        adapter.setBusNumberList(busList);
+
         busListView.setAdapter(adapter);
-        busListView.setVisibility(View.VISIBLE);
-        busListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                CheckableLinearLayout linearLayout = (CheckableLinearLayout) view;
-                linearLayout.toggle();
-            }
-        });
+
+        //리스트 아이템 클릭시에 문제는 xml에서 focus옵션의 설정으로 해결.
+        //리스트 선택시 체크박스 체크 오류로 설정
+        busListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
     }
 
-    private void bleCheck(BluetoothAdapter bluetoothAdapter) {
-        if (bluetoothAdapter == null) {
-            //블루투스를 지원하지 않으면 장치를 끈다
-            Toast.makeText(this, "블루투스를 지원하지 않는 장치입니다.", Toast.LENGTH_SHORT).show();
-            finish();
-        } else {
-            //연결 안되었을 때
-            if (!bluetoothAdapter.isEnabled()) {
-                Intent i = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivity(i);
-            }
-
-            bluetoothLeScanner.startScan(scanCallback);
-        }
+    //
+    private void beaconScanServiceStart(){
+        Intent intent = new Intent(this.getApplicationContext(), BeaconScanService.class);
+        startService(intent);
+        bindService(intent, connection, BIND_AUTO_CREATE);
     }
 
-    ScanCallback scanCallback = new ScanCallback() {
+    BeaconScanService beaconScanService;
+
+    ServiceConnection connection= new ServiceConnection() {
         @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            ScanRecord scanRecord = result.getScanRecord();
-            if( result.getDevice().getName() != null && result.getDevice().getName().equals("KangBeacon") ){
-                Log.d("BLEDebug" , "Device name:" + result.getDevice().getName());
-                Log.d("BLEDebug" , "device mac Address:"+ result.getDevice());
-
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0 ; i < 16 ; i++){
-                    sb.append( String.format("%02X", scanRecord.getBytes()[9+i]) );
-                    sb.append("-");
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            BeaconScanService.CallbackBinder callbackBinder = (BeaconScanService.CallbackBinder) iBinder;
+            beaconScanService = callbackBinder.getService();
+            beaconScanService.registCallback(new BeaconScanService.ICallBack() {
+                @Override
+                public void scanStation(String data) {
+                    requestBusList(data);
                 }
-                Log.d("BLEDebug" , "data to String:" + sb.toString());
+            });
 
-                //notificationBusStation(sb.toString());
-
-                statusText.setText("정류소 찾음");
-                bluetoothLeScanner.stopScan(scanCallback);
-            }
         }
 
         @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
+        public void onServiceDisconnected(ComponentName componentName) {
+            Log.d("Test", "Dissconnected is Called");
         }
     };
 
 
 
+    //정류장 번호로 버스 리스트 요청
+    private void requestBusList(String data){
+        Log.d("Test", "receive data :" + data);
 
+        busList.add("305");
+        busList.add("578");
+        busList.add("708");
+        busList.add("103");
+        busList.add("1006");
+        busList.add("79");
+        adapter.notifyDataSetChanged();
+    }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
 
 }

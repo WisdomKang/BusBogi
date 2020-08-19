@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">BusBogi</string>
-    <string name="image_description">로고이미지 입니다. 귀찮게 계속 여기다 적어서 사용하라고 해서 아무거나 쓰고 있습니다.</string>
+    <string name="image_description">로딩 화면 로고입니다.</string>
+    <string name="alarm_button">Alarm</string>
+    <string name="bus_list_ready">정차 버스를 읽어오는 중입니다.</string>
+    <string name="bus_list_set">알림을 받을실 버스를 선택해주세요.</string>
+    <string name="bus_scan"></string>
 </resources>

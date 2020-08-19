@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.jar.Attributes;
 
 public class BusListAdapter extends BaseAdapter {
-    private ArrayList<String> busNumberList = new ArrayList<>();
+    private ArrayList<String> busNumberList;
 
     @Override
     public int getCount() {
@@ -50,8 +50,9 @@ public class BusListAdapter extends BaseAdapter {
         return convertView;
     }
 
-
-
+    public void setBusNumberList(ArrayList<String> arrayList){
+        this.busNumberList = arrayList;
+    }
     public void addNumber(String number){
         busNumberList.add(number);
     }

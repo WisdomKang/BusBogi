@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFEB3B"
     android:orientation="vertical"
+    android:weightSum="10"
     tools:context=".main.MainActivity">
 
     <TextView
@@ -13,23 +14,34 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:text="TestText"
+        android:text="@string/bus_list_ready"
         android:textColor="#000000"
-        android:textSize="70sp"
-        app:layout_constraintBottom_toBottomOf="@+id/busList"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/busList"
-        app:layout_constraintTop_toTopOf="@+id/busList" />
+        android:textSize="18sp"
+        android:visibility="gone" />
 
     <ListView
         android:id="@+id/busList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="20dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="0dp"
+        android:layout_margin="5dp"
+        android:layout_weight="9"
+        android:visibility="visible">
 
     </ListView>
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+    <Button
+        android:id="@+id/alarmButton"
+        style="@style/Widget.AppCompat.Button.Colored"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/alarm_button"
+        android:textColor="#090808"
+        android:textColorHighlight="#FFFFFF"
+        android:textColorLink="#FFFFFF"
+        android:visibility="visible"
+        tools:layout_editor_absoluteX="5dp"
+        tools:layout_editor_absoluteY="598dp"
+        tools:visibility="visible" />
+
+</LinearLayout>

@@ -7,6 +7,6 @@
         android:toYDelta="0%p"
         android:repeatCount="infinite"
         android:repeatMode="restart"
-        android:duration="5000"
+        android:duration="3000"
         ></translate>
 </set>

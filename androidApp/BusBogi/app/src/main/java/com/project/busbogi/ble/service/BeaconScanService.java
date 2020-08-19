@@ -27,29 +27,30 @@ import java.util.List;
 
 
 public class BeaconScanService extends Service {
-    ICallback callback;
-    public interface ICallback { public void remoteCall(); }
+    //매인 엑티비티에 정류소 도착시에 알려줄 Callback 매서드
 
-    public void registCallBack(ICallback inCallService){
-        callback = inCallService;
-    }
-
+    private boolean activityCheck = false;
 
     @Override
     public IBinder onBind(Intent intent) {
-        binder = new ScanBinder();
+        Log.d("Test", "MyBinder Address : " + binder);
+        activityCheck = true;
         return binder;
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        super.onStartCommand(intent, flags, startId);
-        return START_STICKY;
+    public interface ICallBack{
+        public void scanStation(String data);
     }
 
-    public ScanBinder binder;
+    public ICallBack iCallBack;
 
-    public class ScanBinder extends Binder{
+    public void registCallback(ICallBack iCallBack){
+        this.iCallBack = iCallBack;
+    }
+
+    CallbackBinder binder = new CallbackBinder();
+
+    public class CallbackBinder extends Binder{
         public BeaconScanService getService(){
             return BeaconScanService.this;
         }
@@ -60,12 +61,18 @@ public class BeaconScanService extends Service {
     private BluetoothLeScanner bluetoothLeScanner;
 
     @Override
-    public void onCreate() {
-        super.onCreate();
+    public int onStartCommand(Intent intent, int flags, int startId) {
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
         scanBusStation(bluetoothLeScanner);
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        activityCheck = false;
+        return super.onUnbind(intent);
     }
 
     //정류장 스캔
@@ -77,19 +84,21 @@ public class BeaconScanService extends Service {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             ScanRecord scanRecord = result.getScanRecord();
+            Log.d("BLEDebug" , "device name:" +  result.getDevice().getName());
+            Log.d("BLEDebug" , "Address:" +  result.getDevice().getAddress());
             if( result.getDevice().getName() != null && result.getDevice().getName().equals("KangBeacon") ){
-                Log.d("BLEDebug" , "Device name:" + result.getDevice().getName());
-                Log.d("BLEDebug" , "device mac Address:"+ result.getDevice());
-
                 StringBuilder sb = new StringBuilder();
                 for(int i = 0 ; i < 16 ; i++){
                     sb.append( String.format("%02X", scanRecord.getBytes()[9+i]) );
                     sb.append("-");
                 }
                 Log.d("BLEDebug" , "data to String:" + sb.toString());
-
-                callback.remoteCall();
-                //notificationBusStation(sb.toString());
+                if( iCallBack != null )  {
+                    iCallBack.scanStation(sb.toString());
+                }
+                if( !activityCheck ){
+                    notificationBusStation(sb.toString());
+                }
                 bluetoothLeScanner.stopScan(scanCallback);
             }
         }
@@ -142,7 +151,7 @@ public class BeaconScanService extends Service {
         }else builder.setSmallIcon(R.mipmap.ic_launcher_bus); // Oreo 이하에서 mipmap 사용하지 않으면 Couldn't create icon: StatusBarIcon 에러남
 
         assert notificationManager != null;
-        notificationManager.notify(1234, builder.build()); // 고유숫자로 노티피케이션 동작시킴
+        notificationManager.notify(1025, builder.build()); // 고유숫자로 노티피케이션 동작시킴
 
     }
 }
