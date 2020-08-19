@@ -4,7 +4,7 @@
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="cardview_light_background">#FFEB5A</color>
-    <color name="bus_list_item_background">#FAFE6E</color>
+    <color name="bus_list_item_background">#FFFFFF</color>
     <color name="busNumberBackground">#FFFFFF</color>
 
 </resources>

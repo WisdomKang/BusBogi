@@ -16,11 +16,6 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <receiver
-            android:name=".ble.broadcast.BeaconScanReceiver"
-            android:enabled="true"
-            android:exported="true" />
-
         <service
             android:name=".ble.service.BeaconScanService"
             android:enabled="true"

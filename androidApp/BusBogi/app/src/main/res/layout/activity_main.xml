@@ -13,11 +13,14 @@
         android:id="@+id/statusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:layout_marginBottom="5dp"
+        android:background="@drawable/round_coner"
         android:gravity="center"
         android:text="@string/bus_list_ready"
         android:textColor="#000000"
         android:textSize="18sp"
-        android:visibility="gone" />
+        android:visibility="visible" />
 
     <ListView
         android:id="@+id/busList"

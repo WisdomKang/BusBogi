@@ -8,14 +8,17 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanRecord;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.ParcelUuid;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -27,13 +30,15 @@ import java.util.List;
 
 
 public class BeaconScanService extends Service {
-    //매인 엑티비티에 정류소 도착시에 알려줄 Callback 매서드
 
+    private static final String TAG = "BeaconService";
     private boolean activityCheck = false;
+
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.d("Test", "MyBinder Address : " + binder);
+        Log.d(TAG, "MyBinder Address : " + binder);
+        scanBusStation(bluetoothLeScanner);
         activityCheck = true;
         return binder;
     }
@@ -61,11 +66,16 @@ public class BeaconScanService extends Service {
     private BluetoothLeScanner bluetoothLeScanner;
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
+    public void onCreate() {
         bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
-        scanBusStation(bluetoothLeScanner);
+        super.onCreate();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand is called!");
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -77,6 +87,14 @@ public class BeaconScanService extends Service {
 
     //정류장 스캔
     private void scanBusStation(BluetoothLeScanner bluetoothLeScanner){
+        ScanFilter.Builder scanFilterBuilder = new ScanFilter.Builder();
+
+        ScanSettings.Builder scBuilder = new ScanSettings.Builder();
+        scBuilder.setReportDelay(500);
+        scBuilder.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
+
+        Log.d(TAG, "scan start!!!!!!!!!!!");
+
         bluetoothLeScanner.startScan(scanCallback);
     }
 
@@ -84,23 +102,22 @@ public class BeaconScanService extends Service {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             ScanRecord scanRecord = result.getScanRecord();
-            Log.d("BLEDebug" , "device name:" +  result.getDevice().getName());
-            Log.d("BLEDebug" , "Address:" +  result.getDevice().getAddress());
-            if( result.getDevice().getName() != null && result.getDevice().getName().equals("KangBeacon") ){
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0 ; i < 16 ; i++){
-                    sb.append( String.format("%02X", scanRecord.getBytes()[9+i]) );
-                    sb.append("-");
-                }
-                Log.d("BLEDebug" , "data to String:" + sb.toString());
-                if( iCallBack != null )  {
-                    iCallBack.scanStation(sb.toString());
-                }
-                if( !activityCheck ){
-                    notificationBusStation(sb.toString());
-                }
-                bluetoothLeScanner.stopScan(scanCallback);
+            Log.d(TAG , "device name:" +  result.getDevice().getName());
+            Log.d(TAG , "Address:" +  result.getDevice().getAddress());
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0 ; i < 16 ; i++){
+                sb.append( String.format("%02X", scanRecord.getBytes()[9+i]) );
+                sb.append("-");
             }
+            Log.d(TAG , "data to String:" + sb.toString());
+
+            if( iCallBack != null )  {
+                iCallBack.scanStation(sb.toString());
+            }
+            if( !activityCheck ){
+                notificationBusStation(sb.toString());
+            }
+            bluetoothLeScanner.stopScan(scanCallback);
         }
 
         @Override
@@ -110,6 +127,7 @@ public class BeaconScanService extends Service {
 
         @Override
         public void onScanFailed(int errorCode) {
+            Log.d(TAG , "Scan Failed");
             super.onScanFailed(errorCode);
         }
     };

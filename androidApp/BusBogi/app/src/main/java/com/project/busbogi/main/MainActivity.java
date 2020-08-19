@@ -55,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
     //
     private void beaconScanServiceStart(){
         Intent intent = new Intent(this.getApplicationContext(), BeaconScanService.class);
-        startService(intent);
         bindService(intent, connection, BIND_AUTO_CREATE);
     }
 
@@ -98,6 +97,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onStop() {
+        Intent intent = new Intent(this.getApplicationContext(), BeaconScanService.class);
+        stopService(intent);
         super.onStop();
     }
 
