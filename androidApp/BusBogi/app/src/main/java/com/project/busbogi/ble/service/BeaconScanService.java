@@ -19,6 +19,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelUuid;
+import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
@@ -26,111 +27,63 @@ import androidx.core.app.NotificationCompat;
 import com.project.busbogi.main.MainActivity;
 import com.project.busbogi.R;
 
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 
-public class BeaconScanService extends Service {
+public class BeaconScanService extends Service implements BeaconConsumer {
 
     private static final String TAG = "BeaconService";
     private boolean activityCheck = false;
 
+    private static String IBEACON_LAYOUT = "m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        Log.d(TAG, "MyBinder Address : " + binder);
-        scanBusStation(bluetoothLeScanner);
-        activityCheck = true;
-        return binder;
-    }
-
-    public interface ICallBack{
-        public void scanStation(String data);
-    }
-
-    public ICallBack iCallBack;
-
-    public void registCallback(ICallBack iCallBack){
-        this.iCallBack = iCallBack;
-    }
-
-    CallbackBinder binder = new CallbackBinder();
-
-    public class CallbackBinder extends Binder{
-        public BeaconScanService getService(){
-            return BeaconScanService.this;
-        }
-    }
-
-    private BluetoothManager bluetoothManager;
-    private BluetoothAdapter bluetoothAdapter;
-    private BluetoothLeScanner bluetoothLeScanner;
+    private BeaconManager beaconManager;
 
     @Override
     public void onCreate() {
-        bluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        bluetoothAdapter = bluetoothManager.getAdapter();
-        bluetoothLeScanner = bluetoothAdapter.getBluetoothLeScanner();
         super.onCreate();
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+        BeaconParser beaconParser = new BeaconParser();
+        beaconParser.setBeaconLayout(IBEACON_LAYOUT);
+        beaconManager.getBeaconParsers().add(beaconParser);
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(TAG, "onStartCommand is called!");
-        return super.onStartCommand(intent, flags, startId);
+    public IBinder onBind(Intent intent) {
+        activityCheck=true;
+        return null;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        activityCheck = false;
+        activityCheck=false;
         return super.onUnbind(intent);
     }
 
-    //정류장 스캔
-    private void scanBusStation(BluetoothLeScanner bluetoothLeScanner){
-        ScanFilter.Builder scanFilterBuilder = new ScanFilter.Builder();
+    @Override
+    public void onBeaconServiceConnect() {
+        beaconManager.addRangeNotifier(new RangeNotifier() {
+            @Override
+            public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
 
-        ScanSettings.Builder scBuilder = new ScanSettings.Builder();
-        scBuilder.setReportDelay(500);
-        scBuilder.setScanMode(ScanSettings.SCAN_MODE_BALANCED);
+            }
+        });
 
-        Log.d(TAG, "scan start!!!!!!!!!!!");
-
-        bluetoothLeScanner.startScan(scanCallback);
     }
 
-    ScanCallback scanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            ScanRecord scanRecord = result.getScanRecord();
-            Log.d(TAG , "device name:" +  result.getDevice().getName());
-            Log.d(TAG , "Address:" +  result.getDevice().getAddress());
-            StringBuilder sb = new StringBuilder();
-            for(int i = 0 ; i < 16 ; i++){
-                sb.append( String.format("%02X", scanRecord.getBytes()[9+i]) );
-                sb.append("-");
-            }
-            Log.d(TAG , "data to String:" + sb.toString());
-
-            if( iCallBack != null )  {
-                iCallBack.scanStation(sb.toString());
-            }
-            if( !activityCheck ){
-                notificationBusStation(sb.toString());
-            }
-            bluetoothLeScanner.stopScan(scanCallback);
-        }
-
-        @Override
-        public void onBatchScanResults(List<ScanResult> results) {
-            super.onBatchScanResults(results);
-        }
-
-        @Override
-        public void onScanFailed(int errorCode) {
-            Log.d(TAG , "Scan Failed");
-            super.onScanFailed(errorCode);
-        }
-    };
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
 
     //Notification 함수 및 변수
     private static String NOTIFICATION_CHANNEL_ID = "11010";

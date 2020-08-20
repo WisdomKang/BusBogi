@@ -1,5 +1,8 @@
 package com.project.busbogi;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.BluetoothLeScanner;
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -17,10 +20,13 @@ import static org.junit.Assert.*;
  */
 @RunWith(AndroidJUnit4.class)
 public class ExampleInstrumentedTest {
+
     @Test
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
         assertEquals("com.project.busbogi", appContext.getPackageName());
     }
+
+
 }

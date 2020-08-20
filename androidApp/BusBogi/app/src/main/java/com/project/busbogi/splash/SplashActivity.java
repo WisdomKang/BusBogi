@@ -14,14 +14,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.project.busbogi.R;
-import com.project.busbogi.main.MainActivity;
+import com.project.busbogi.main.MainActivity2;
 
 public class SplashActivity extends AppCompatActivity {
     //필요권한들
@@ -66,7 +65,7 @@ public class SplashActivity extends AppCompatActivity {
 
     //메인 액티비티 실행
     private void startMainActivity(){
-        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        Intent intent = new Intent(getApplicationContext(), MainActivity2.class);
         startActivity(intent);
         finish();
     }

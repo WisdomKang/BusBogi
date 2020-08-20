@@ -20,7 +20,7 @@ import com.project.busbogi.ble.service.BeaconScanService;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity{
 
     //UI관련 View Widget
     private ListView busListView;
@@ -54,31 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     //
     private void beaconScanServiceStart(){
-        Intent intent = new Intent(this.getApplicationContext(), BeaconScanService.class);
-        bindService(intent, connection, BIND_AUTO_CREATE);
     }
-
-    BeaconScanService beaconScanService;
-
-    ServiceConnection connection= new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            BeaconScanService.CallbackBinder callbackBinder = (BeaconScanService.CallbackBinder) iBinder;
-            beaconScanService = callbackBinder.getService();
-            beaconScanService.registCallback(new BeaconScanService.ICallBack() {
-                @Override
-                public void scanStation(String data) {
-                    requestBusList(data);
-                }
-            });
-
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            Log.d("Test", "Dissconnected is Called");
-        }
-    };
 
 
 
