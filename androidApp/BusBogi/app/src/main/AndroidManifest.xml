@@ -15,7 +15,6 @@
         android:roundIcon="@mipmap/ic_launcher_bus_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".main.MainActivity2"></activity>
 
         <service
             android:name=".ble.service.BeaconScanService"
@@ -27,12 +26,12 @@
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".main.MainActivity"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 

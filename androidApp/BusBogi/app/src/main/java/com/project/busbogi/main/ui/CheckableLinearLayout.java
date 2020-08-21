@@ -1,4 +1,4 @@
-package com.project.busbogi.main;
+package com.project.busbogi.main.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;

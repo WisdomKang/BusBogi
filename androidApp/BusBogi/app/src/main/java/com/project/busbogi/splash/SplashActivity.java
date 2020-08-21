@@ -20,7 +20,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.project.busbogi.R;
-import com.project.busbogi.main.MainActivity2;
+import com.project.busbogi.main.MainActivity;
 
 public class SplashActivity extends AppCompatActivity {
     //필요권한들
@@ -65,7 +65,7 @@ public class SplashActivity extends AppCompatActivity {
 
     //메인 액티비티 실행
     private void startMainActivity(){
-        Intent intent = new Intent(getApplicationContext(), MainActivity2.class);
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);
         finish();
     }

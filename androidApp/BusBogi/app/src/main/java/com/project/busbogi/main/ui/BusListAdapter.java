@@ -1,20 +1,15 @@
-package com.project.busbogi.main;
+package com.project.busbogi.main.ui;
 
 import android.content.Context;
-import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
-import android.widget.Checkable;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.project.busbogi.R;
 
 import java.util.ArrayList;
-import java.util.jar.Attributes;
 
 public class BusListAdapter extends BaseAdapter {
     private ArrayList<String> busNumberList;
