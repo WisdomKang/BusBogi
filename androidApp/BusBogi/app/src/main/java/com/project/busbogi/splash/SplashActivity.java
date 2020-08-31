@@ -14,15 +14,21 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.project.busbogi.R;
 import com.project.busbogi.main.MainActivity;
 
 public class SplashActivity extends AppCompatActivity {
+    private static final String TAG = "WHERE_IS_MY_TOKEN";
     //필요권한들
     private String[] PERMISSIONS = {
             Manifest.permission.BLUETOOTH,
@@ -48,6 +54,25 @@ public class SplashActivity extends AppCompatActivity {
 
         bluetoothManager = (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
+
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "getInstanceId failed", task.getException());
+                            return;
+                        }
+
+                        // Get new Instance ID token
+                        String token = task.getResult().getToken();
+
+                        // Log and toast
+                        String msg = "token:" +  token;
+                        Log.d(TAG, msg);
+                        Toast.makeText(SplashActivity.this, msg, Toast.LENGTH_SHORT).show();
+                    }
+                });
 
         //Permission관련 로직 수행
         Handler handler = new Handler();
@@ -85,6 +110,8 @@ public class SplashActivity extends AppCompatActivity {
     //Permission 요청
     public void getPermission(){
         ActivityCompat.requestPermissions( this , PERMISSIONS ,1000 );
+
+
     }
 
     //Permission 요청후 Callback으로 권한 부여시에 다음 엑티비티로 전환

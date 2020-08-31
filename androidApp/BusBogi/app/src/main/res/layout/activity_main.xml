@@ -38,6 +38,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:onClick="requestBusAlarm"
         android:text="@string/alarm_button"
         android:textColor="#090808"
         android:textColorHighlight="#FFFFFF"

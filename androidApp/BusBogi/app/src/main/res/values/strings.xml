@@ -5,4 +5,6 @@
     <string name="bus_list_ready">정차 버스를 읽어오는 중입니다.</string>
     <string name="bus_list_set">알림을 받을실 버스를 선택해주세요.</string>
     <string name="bus_scan"></string>
+
+    <string name="api_server">http://192.168.103.58:8000</string>
 </resources>

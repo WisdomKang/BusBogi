@@ -5,10 +5,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
+import android.util.SparseBooleanArray;
+import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.project.busbogi.R;
 import com.project.busbogi.main.ui.BusListAdapter;
 
@@ -19,22 +30,27 @@ import org.altbeacon.beacon.BeaconParser;
 import org.altbeacon.beacon.Identifier;
 import org.altbeacon.beacon.RangeNotifier;
 import org.altbeacon.beacon.Region;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.lang.invoke.MethodType;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     private static final String TAG = "TEST-TAG";
 
-    private String STATUS_TAG = "STATUS";
-
     //UI관련 View Widget
     private ListView busListView;
     private TextView statusText;
     private BusListAdapter adapter;
-    private ArrayList<String> busList;
+    private ArrayList<Integer> busList = new ArrayList<>();
 
     private BeaconManager beaconManager;
     private static final String IBEACON_LAYOUT="m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24";
@@ -46,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(STATUS_TAG, "onCreate Called");
+        Log.d(TAG, "onCreate Called");
         setContentView(R.layout.activity_main);
         initUi();
         initBeaconManager();
@@ -55,17 +71,15 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
     //UI 초기화 메서드
     private void initUi() {
         busListView = findViewById(R.id.busList);
+        //리스트 선택시 체크박스 체크 오류로 설정
+        busListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         statusText = findViewById(R.id.statusText);
-        busList = new ArrayList<>();
 
         adapter = new BusListAdapter();
         adapter.setBusNumberList(busList);
-
         busListView.setAdapter(adapter);
-
         //리스트 아이템 클릭시에 문제는 xml에서 focus옵션의 설정으로 해결.
-        //리스트 선택시 체크박스 체크 오류로 설정
-        busListView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+
     }
 
     //비콘 매니저 초기화
@@ -86,25 +100,23 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         beaconManager.addRangeNotifier(new RangeNotifier() {
             @Override
             public void didRangeBeaconsInRegion(Collection<Beacon> collection, Region region) {
-                Log.d(TAG , "region" + region.getUniqueId());
                 Log.d(TAG ,"Beacon 정보 읽는 중");
                 if( !collection.isEmpty() ) {
-                    int busStopNumber = 0 ;
+                    int busStationId = 0 ;
                     for (Beacon beacon : collection) {
-                        busStopNumber = beacon.getId2().toInt();
-                        String msgText = "현재 " + busStopNumber + "번 정류소 입니니다.";
+                        busStationId = beacon.getId2().toInt();
+                        String msgText = "현재 " + busStationId + "번 정류소 입니니다.";
                         statusText.setText(msgText);
                         Toast.makeText(getApplicationContext(), msgText , Toast.LENGTH_SHORT).show();
                     }
-                    if( busStopNumber != 0 ) {
-                        requestBusList(busStopNumber);
+                    if( busStationId != 0 ) {
+                        requestBusList(busStationId );
                     }
                     try {
                         beaconManager.stopRangingBeaconsInRegion(myRegion);
                     }catch (Exception e){
                         e.printStackTrace();
                     }
-
                 }else{
                     Log.d(TAG , "앵? 수신한게 비어있네?....?");
                 }
@@ -121,84 +133,74 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
 
     //정류장 번호로 버스 리스트 요청
-    private void requestBusList(int data){
-        Log.d("Test", "receive data :" + data);
+    private void requestBusList(int busStationId){
+        Log.d("Test", "receive data :" + busStationId);
 
-        busList.add("305");
-        busList.add("578");
-        busList.add("708");
-        busList.add("103");
-        busList.add("1006");
-        busList.add("79");
-        adapter.notifyDataSetChanged();
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        String url = getString(R.string.api_server)+"/api/station/bus/" + busStationId;
+
+        Log.d("Test", "request url :" + url);
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url,null, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    JSONArray stopBusList = response.getJSONArray("bus_list");
+                    busList.clear();
+                    Log.d(TAG, response.toString());
+
+                    for(int i = 0 ; i < stopBusList.length(); i++){
+                         busList.add( stopBusList.getInt(i) );
+                    }
+
+                    adapter.notifyDataSetChanged();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+                Log.d(TAG, "Error:" + error.getLocalizedMessage() );
+            }
+        });
+
+        requestQueue.add(jsonObjectRequest);
+
     }
 
+    public void requestBusAlarm(View view){
+        SparseBooleanArray checkedArray = busListView.getCheckedItemPositions();
+        JSONArray jsonArray = new JSONArray();
+        List<Integer> busNumList = new ArrayList<>();
+        for(int i = 0 ; i < busListView.getAdapter().getCount() ; i ++){
+            if(checkedArray.get(i)) jsonArray.put(Integer.parseInt( (String)adapter.getItem(i)));
+        }
+        int station_id = 22415;
+        JSONObject bodyData = new JSONObject();
 
-    @Override
-    protected void onPause() {
-        Log.d(STATUS_TAG , "PAUSE");
-        isRunning = false;
-        super.onPause();
+        try {
+            bodyData.put("station_id" , station_id);
+            bodyData.put("bus_number_list" , jsonArray);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, "http://192.168.22.129:8980/json", bodyData, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.d(TAG, response.toString());
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, error.getMessage() + "Error!!!!");
+            }
+        });
+
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        requestQueue.add(request);
     }
 
-    @Override
-    protected void onResume() {
-        Log.d(STATUS_TAG , "RESUME");
-        isRunning = true;
-        super.onResume();
-    }
-
-    @Override
-    protected void onStop() {
-        Log.d(STATUS_TAG , "onStop");
-        super.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        Log.d(STATUS_TAG,"onDestroy");
-        beaconManager.unbind(this);
-        super.onDestroy();
-    }
-
-//    private static String NOTIFICATION_CHANNEL_ID = "11010";
-//
-//    public void notificationBusStation(int busStationId) {
-//        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-//
-//        Intent notificationIntent = new Intent(this, MainActivity.class);
-//        notificationIntent.putExtra("busStationId" , busStationId);
-//        notificationIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP) ;
-//        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent,  PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-//                .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_bus_foreground)) //BitMap 이미지 요구
-//                .setContentTitle("BusBogi")
-//                .setContentText("버스정류장에 도착했습니다.")
-//                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-//                .setContentIntent(pendingIntent)
-//                .setAutoCancel(true);
-//
-//        //OREO API 26 이상에서는 채널 필요
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//
-//            builder.setSmallIcon(R.mipmap.ic_launcher_bus); //mipmap 사용시 Oreo 이상에서 시스템 UI 에러남
-//            CharSequence channelName  = "BusBogiAlarm";
-//            String description = "BusBogi Notification Channel";
-//            int importance = NotificationManager.IMPORTANCE_HIGH;
-//
-//            NotificationChannel channel = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName , importance);
-//            channel.setDescription(description);
-//
-//            // 노티피케이션 채널을 시스템에 등록
-//            assert notificationManager != null;
-//            notificationManager.createNotificationChannel(channel);
-//
-//        }else builder.setSmallIcon(R.mipmap.ic_launcher_bus); // Oreo 이하에서 mipmap 사용하지 않으면 Couldn't create icon: StatusBarIcon 에러남
-//
-//        assert notificationManager != null;
-//        notificationManager.notify(1025, builder.build()); // 고유숫자로 노티피케이션 동작시킴
-//
-//    }
 
 }

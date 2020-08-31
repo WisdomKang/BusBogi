@@ -12,7 +12,7 @@ import com.project.busbogi.R;
 import java.util.ArrayList;
 
 public class BusListAdapter extends BaseAdapter {
-    private ArrayList<String> busNumberList;
+    private ArrayList<Integer> busNumberList;
 
     @Override
     public int getCount() {
@@ -20,13 +20,13 @@ public class BusListAdapter extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int i) {
-        return busNumberList.get(i);
+    public Object getItem(int position) {
+        return busNumberList.get(position);
     }
 
     @Override
     public long getItemId(int i) {
-        return 0;
+        return i;
     }
 
     @Override
@@ -41,15 +41,13 @@ public class BusListAdapter extends BaseAdapter {
         TextView busNumberView = convertView.findViewById(R.id.busNumber);
         TextView busStatusView = convertView.findViewById(R.id.busStatus);
 
-        busNumberView.setText(busNumberList.get(position));
+        busNumberView.setText(busNumberList.get(position)+"");
         return convertView;
     }
 
-    public void setBusNumberList(ArrayList<String> arrayList){
+
+    public void setBusNumberList(ArrayList<Integer> arrayList){
         this.busNumberList = arrayList;
-    }
-    public void addNumber(String number){
-        busNumberList.add(number);
     }
 }
 
