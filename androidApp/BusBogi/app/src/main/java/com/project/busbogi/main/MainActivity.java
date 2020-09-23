@@ -1,5 +1,6 @@
 package com.project.busbogi.main;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -20,8 +21,13 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 import com.project.busbogi.R;
 import com.project.busbogi.main.ui.BusListAdapter;
+import com.project.busbogi.splash.SplashActivity;
 
 import org.altbeacon.beacon.Beacon;
 import org.altbeacon.beacon.BeaconConsumer;
@@ -57,6 +63,8 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     private Region myRegion;
 
+    private String pushToken;
+
     private boolean isRunning = false;
 
     @Override
@@ -66,6 +74,21 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
         setContentView(R.layout.activity_main);
         initUi();
         initBeaconManager();
+
+        FirebaseInstanceId.getInstance().getInstanceId()
+                .addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                        if (!task.isSuccessful()) {
+                            Log.w(TAG, "getInstanceId failed", task.getException());
+                            return;
+                        }
+                        // Get new Instance ID token
+                        pushToken = task.getResult().getToken();
+
+                        Log.d(TAG, pushToken);
+                    }
+                });
     }
 
     //UI 초기화 메서드
@@ -134,12 +157,12 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     //정류장 번호로 버스 리스트 요청
     private void requestBusList(int busStationId){
-        Log.d("Test", "receive data :" + busStationId);
+        Log.d(TAG, "receive data :" + busStationId);
 
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         String url = getString(R.string.api_server)+"/api/station/bus/" + busStationId;
 
-        Log.d("Test", "request url :" + url);
+        Log.d(TAG, "request url :" + url);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(url,null, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
@@ -171,25 +194,27 @@ public class MainActivity extends AppCompatActivity implements BeaconConsumer {
 
     public void requestBusAlarm(View view){
         SparseBooleanArray checkedArray = busListView.getCheckedItemPositions();
+
+        String url = getString(R.string.api_server)+"/api/station/bus/select";
         JSONArray jsonArray = new JSONArray();
         List<Integer> busNumList = new ArrayList<>();
         for(int i = 0 ; i < busListView.getAdapter().getCount() ; i ++){
-            if(checkedArray.get(i)) jsonArray.put(Integer.parseInt( (String)adapter.getItem(i)));
+            if(checkedArray.get(i)) jsonArray.put((Integer)adapter.getItem(i));
         }
-        int station_id = 22415;
         JSONObject bodyData = new JSONObject();
 
         try {
-            bodyData.put("station_id" , station_id);
-            bodyData.put("bus_number_list" , jsonArray);
+            bodyData.put("user_id" , pushToken);
+            bodyData.put("bus_list" , jsonArray);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, "http://192.168.22.129:8980/json", bodyData, new Response.Listener<JSONObject>() {
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, bodyData, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 Log.d(TAG, response.toString());
+                Toast.makeText(getApplicationContext(), "버스 알림 요청을 완료했습니다.", Toast.LENGTH_SHORT).show();
             }
         }, new Response.ErrorListener() {
             @Override
